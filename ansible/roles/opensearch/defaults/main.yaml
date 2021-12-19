@@ -1,0 +1,8 @@
+---
+opensearch:
+  namespace: opensearch
+  containerImage: opensearchproject/opensearch:1.2.0
+  username: admin
+  password: admin
+  storageClass: microk8s-hostpath
+  volumeSize: 10Gi

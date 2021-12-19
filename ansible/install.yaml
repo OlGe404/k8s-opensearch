@@ -1,0 +1,8 @@
+---
+- name: install microk8s
+  hosts: localhost
+  environment:
+    K8S_AUTH_KUBECONFIG: "{{ lookup('env', 'HOME') }}/.kube/microk8s_config"
+  roles:
+    - role: opensearch
+    # - role: opensearch_dashboards

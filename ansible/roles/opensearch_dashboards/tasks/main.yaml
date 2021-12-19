@@ -1,0 +1,7 @@
+---
+- name: Deploy opensearch
+  kubernetes.core.k8s:
+    state: present
+    namespace: kube-system
+    definition: "{{ lookup('file', '{{ item }}') | from_yaml }}"
+  loop: "{{ query('fileglob', 'files/*.yaml') }}"

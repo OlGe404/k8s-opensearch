@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opensearch
+  labels:
+    app: opensearch
+spec:
+  selector:
+    matchLabels:
+      app: opensearch
+  serviceName: "opensearch"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: opensearch
+    spec:
+      terminationGracePeriodSeconds: 180
+      serviceAccount: opensearch
+      # volumes:
+      #   - name: opensearch-configs
+      #     configMap:
+      #       name: opensearch-configs
+      containers:
+        - name: opensearch
+          image: {{ opensearch.containerImage }}
+          ports:
+            - name: http
+              containerPort: 9200
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: opensearch-credentials
+                  key: username
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: opensearch-credentials
+                  key: username
+          volumeMounts:
+            - name: opensearch-data
+              mountPath: /usr/share/opensearch/data
+            # - name: opensearch-configs
+            #   mountPath: /usr/share/opensearch/config
+          livenessProbe:
+            initialDelaySeconds: 60
+            httpGet:
+              port: http
+              path: _cat/nodes?v
+              httpHeaders:
+                - name: Authorization
+                  value: Basic {{ opensearch.username:opensearch.password | b64encode }}
+          readinessProbe:
+            httpGet:
+              port: http
+              path: _cat/nodes?v
+              httpHeaders:
+                - name: Authorization
+                  value: Basic {{ opensearch.username:opensearch.password | b64encode }}
+  volumeClaimTemplates:
+    - metadata:
+        name: opensearch-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "{{ opensearch.storageClass }}"
+        resources:
+          requests:
+            storage: {{ opensearch.volumeSize }}
